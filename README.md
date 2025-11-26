@@ -166,7 +166,7 @@ Servidor disponible en: [http://localhost:8080/](http://localhost:8080/)
 
 ## 🔌 Endpoints Principales
 
-### Health Check
+### FreeEd Check
 
 `GET /`
 
