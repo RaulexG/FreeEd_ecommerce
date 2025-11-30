@@ -21,7 +21,7 @@ export const pool = await mysql.createPool({
   namedPlaceholders: false
 });
 
-// (opcional) verifica conexión al iniciar
+// verifica conexión al iniciar
 try {
   const [rows] = await pool.query("SELECT 1 AS ok");
   if (rows?.[0]?.ok !== 1) throw new Error("Ping MySQL falló");

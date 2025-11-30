@@ -1,10 +1,10 @@
 -- =========================================================
 -- Script de creación de base de datos: freeed_db
--- Proyecto: FreeEd - Plataforma de educación en línea
--- Autor: Raulex cn
+-- Proyecto: FreeEd - Plataforma de cursos digitales
+-- Autor: Raúl Chavira Narváez
 -- =========================================================
 
--- 1) Crear base de datos (si no existe)
+-- 1) Crear base de datos
 CREATE DATABASE IF NOT EXISTS `freeed_db`
   DEFAULT CHARACTER SET utf8mb4
   COLLATE utf8mb4_general_ci;
@@ -13,22 +13,25 @@ CREATE DATABASE IF NOT EXISTS `freeed_db`
 USE `freeed_db`;
 
 -- 3) Crear usuario del proyecto
---    Este usuario es el mismo que se usa en el archivo .env
-CREATE USER 'Raulcn'@'localhost'
+CREATE USER IF NOT EXISTS 'Raulcn'@'localhost'
   IDENTIFIED BY 'FreeEd25';
 
--- 4) Otorgar permisos al usuario sobre la base de datos del proyecto
+-- 4) Otorgar permisos al usuario
 GRANT ALL PRIVILEGES ON `freeed_db`.*
   TO 'Raulcn'@'localhost';
 
 FLUSH PRIVILEGES;
 
--- 5) Crear tabla clientes (si no existe)
+-- =========================================================
+-- TABLA PRINCIPAL: CLIENTES
+-- =========================================================
+
 CREATE TABLE IF NOT EXISTS `clientes` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `nombre` VARCHAR(150) NOT NULL,
   `email` VARCHAR(150) NOT NULL,
   `password_hash` VARCHAR(255) NOT NULL,
+  `rol` ENUM('CLIENTE','ADMIN') NOT NULL DEFAULT 'CLIENTE',
   `activo` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -40,22 +43,20 @@ CREATE TABLE IF NOT EXISTS `clientes` (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_general_ci;
 
--- 6) Insertar usuario de prueba para login
-
-INSERT INTO `clientes` (nombre, email, password_hash, activo)
+-- Usuario de prueba (se convertirá en admin más adelante)
+INSERT INTO `clientes` (nombre, email, password_hash, rol, activo)
 VALUES (
   'raulex cn',
   'raulex@gmail.com',
   '$2a$12$gDE9u3UW5tZylwZNd7/a9.KPjz3dmh0CnfSvBfQCPeW2/2duStW8i',
+  'ADMIN',
   1
 );
 
 -- =========================================================
--- MODELO COMPLETO DE FREEED (ECOMMERCE DE CURSOS)
+-- PERFILES DE ESTUDIANTE (ADMIN / CREADOR)
 -- =========================================================
 
-
--- PERFILES DE ESTUDIANTE 
 CREATE TABLE IF NOT EXISTS `perfiles_estudiante` (
   `cliente_id` BIGINT UNSIGNED NOT NULL,
   `telefono` VARCHAR(30) NULL,
@@ -77,9 +78,10 @@ CREATE TABLE IF NOT EXISTS `perfiles_estudiante` (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_general_ci;
 
-
-
+-- =========================================================
 -- CATEGORÍAS DE CURSO
+-- =========================================================
+
 CREATE TABLE IF NOT EXISTS `categorias_curso` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `nombre` VARCHAR(120) NOT NULL,
@@ -91,9 +93,10 @@ CREATE TABLE IF NOT EXISTS `categorias_curso` (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_general_ci;
 
-
-
+-- =========================================================
 -- CURSOS
+-- =========================================================
+
 CREATE TABLE IF NOT EXISTS `cursos` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `instructor_id` BIGINT UNSIGNED NOT NULL,
@@ -125,9 +128,10 @@ CREATE TABLE IF NOT EXISTS `cursos` (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_general_ci;
 
-
-
+-- =========================================================
 -- PEDIDOS
+-- =========================================================
+
 CREATE TABLE IF NOT EXISTS `pedidos` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `cliente_id` BIGINT UNSIGNED NOT NULL,
@@ -153,9 +157,10 @@ CREATE TABLE IF NOT EXISTS `pedidos` (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_general_ci;
 
+-- =========================================================
+-- DETALLES DE PEDIDO
+-- =========================================================
 
-
--- DETALLE DE PEDIDOS
 CREATE TABLE IF NOT EXISTS `pedido_detalles` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `pedido_id` BIGINT UNSIGNED NOT NULL,
@@ -180,9 +185,10 @@ CREATE TABLE IF NOT EXISTS `pedido_detalles` (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_general_ci;
 
+-- =========================================================
+-- RESEÑAS
+-- =========================================================
 
-
--- RESEÑAS DE CURSOS
 CREATE TABLE IF NOT EXISTS `reseñas_curso` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `curso_id` BIGINT UNSIGNED NOT NULL,
@@ -207,16 +213,5 @@ CREATE TABLE IF NOT EXISTS `reseñas_curso` (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_general_ci;
 
-
-
--- CATEGORÍAS DE PRUEBA
-INSERT INTO `categorias_curso` (nombre, descripcion, activo) VALUES
-  ('Programación', 'Cursos de desarrollo y software', 1),
-  ('Diseño y multimedia', 'Cursos de diseño gráfico y edición', 1),
-  ('Idiomas', 'Cursos de idiomas', 1),
-  ('Habilidades académicas', 'Lectura, redacción y más', 1)
-ON DUPLICATE KEY UPDATE
-  descripcion = VALUES(descripcion),
-  activo      = VALUES(activo);
-
+-- Mostrar tablas creadas
 SHOW TABLES FROM freeed_db;

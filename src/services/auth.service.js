@@ -1,51 +1,61 @@
-// services/auth.service.js
+// src/services/auth.service.js
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { LoginSchema } from "../models/auth.model.js";
 import { clienteRepository } from "../repositories/cliente.repository.js";
 
 const { JWT_SECRET, JWT_EXPIRES_IN = "1h" } = process.env;
 
 if (!JWT_SECRET) {
-  throw new Error("Falta JWT_SECRET en variables de entorno");
+  console.warn("Falta JWT_SECRET en el .env");
 }
 
 export const authService = {
-  async login({ email, password }) {
-    const cliente = await clienteRepository.findByEmail(email);
-    if (!cliente) {
-      const err = new Error("Credenciales inválidas");
-      err.status = 401;
-      throw err;
+  async login(payload) {
+    // Validar datos de entrada con Zod
+    const parsed = LoginSchema.safeParse(payload);
+    if (!parsed.success) {
+      const error = new Error("Datos de login inválidos");
+      error.status = 400;
+      error.details = parsed.error.flatten();
+      throw error;
     }
 
-    // aquí sí necesitamos el hash
-    const { id, password_hash, activo } = cliente;
+    const { email, password } = parsed.data;
 
-    // opcional: checar si está activo
-    if (activo === 0 || activo === false) {
-      const err = new Error("Cuenta inactiva");
-      err.status = 403;
-      throw err;
+    // Buscar cliente por email
+    const user = await clienteRepository.findByEmail(email);
+    if (!user || !user.activo) {
+      const error = new Error("Credenciales inválidas");
+      error.status = 401;
+      throw error;
     }
 
-    const ok = await bcrypt.compare(password, password_hash);
+    // Comparar contraseña
+    const ok = await bcrypt.compare(password, user.password_hash);
     if (!ok) {
-      const err = new Error("Credenciales inválidas");
-      err.status = 401;
-      throw err;
+      const error = new Error("Credenciales inválidas");
+      error.status = 401;
+      throw error;
     }
 
-    const payload = { sub: id, email }; // sub = subject (id del usuario)
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    // Payload del token: incluimos también el rol
+    const tokenPayload = {
+      id: user.id,
+      email: user.email,
+      rol: user.rol
+    };
 
-    // no regreses el hash
+    const token = jwt.sign(tokenPayload, JWT_SECRET, {
+      expiresIn: JWT_EXPIRES_IN
+    });
+
+    // Limpiar datos sensibles
+    const { password_hash, ...safeUser } = user;
+
     return {
       token,
-      user: {
-        id,
-        nombre: cliente.nombre,
-        email: cliente.email
-      }
+      user: safeUser
     };
   }
 };
