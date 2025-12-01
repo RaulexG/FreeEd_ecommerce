@@ -38,29 +38,46 @@ Este repositorio contiene la primera entrega funcional del sistema, incluyendo a
 src/
   app.js
   server.js
+
   routes/
     index.js
     auth.routes.js
     clientes.routes.js
+    categorias.routes.js
+    cursos.routes.js
     frontend.routes.js
+
   controllers/
     auth.controller.js
     cliente.controller.js
-    frontend.controller.js
+    categoria.controller.js
+    curso.controller.js
+
   services/
     auth.service.js
     cliente.service.js
+    categoria.service.js
+    curso.service.js
+
   repositories/
     cliente.repository.js
+    categoria.repository.js
+    curso.repository.js
+
   models/
     auth.model.js
     cliente.model.js
+    categoria.model.js
+    curso.model.js
+
   middlewares/
     auth.js
     errorHandler.js
     notFound.js
+
   utils/
     db.js
+
   frontend/
     layout/
       basepage.js
@@ -68,13 +85,23 @@ src/
       home.js
       login.js
       registro.js
+      admin/
+        dashboard.js
+        categoria.js
+        productos.js
     errors/
-      404.js
+      ForbiddenPage.js
+      NotFoundPage.js
     assets/
-      (imágenes opcionales)
+      logo.png
+      logo_banner.png
+      icono.png
+
 bd/
-  freeed_db.sql   ← Script completo de la base de datos
-.env   (se crea manualmente)
+  freeed_db.sql
+
+.env
+
 ```
 
 ---
@@ -204,15 +231,52 @@ Enviar el token:
 Authorization: Bearer <token>
 ```
 
-### 👥 Clientes (Rutas protegidas)
+🔌 Endpoints Principales
+🔐 Autenticación
 
-- `GET /api/clientes` — Lista todos los clientes.
-- `GET /api/clientes/:id` — Obtiene un cliente por id.
-- `POST /api/clientes` — Registra un cliente nuevo.
-- `PATCH /api/clientes/:id` — Actualiza info de cliente.
-- `DELETE /api/clientes/:id` — Elimina un cliente.
+POST /api/auth/login
 
----
+👤 Clientes
+
+Rutas protegidas:
+
+GET /api/clientes
+
+GET /api/clientes/:id
+
+POST /api/clientes
+
+PATCH /api/clientes/:id
+
+DELETE /api/clientes/:id
+
+📂 Categorías
+
+(Protegidas con JWT)
+
+GET /api/categorias
+
+GET /api/categorias/:id
+
+POST /api/categorias
+
+PATCH /api/categorias/:id
+
+DELETE /api/categorias/:id
+
+🎓 Cursos
+
+(Protegidas con JWT)
+
+GET /api/cursos
+
+GET /api/cursos/:id
+
+POST /api/cursos
+
+PATCH /api/cursos/:id
+
+DELETE /api/cursos/:id
 
 ## 🧩 Modelo de Datos – Resumen
 
@@ -242,7 +306,7 @@ Base sólida para:
 - BD completa creada
 - Frontend base (home, login, registro)
 
-### ⏳ Entrega 2
+### ✔ Entrega 2
 - CRUD de categorías
 - CRUD de cursos
 

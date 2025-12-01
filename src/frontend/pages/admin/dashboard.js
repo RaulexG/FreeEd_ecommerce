@@ -19,7 +19,7 @@ export function renderAdminDashboard() {
         <a href="/admin/categorias" class="block p-4 bg-white rounded-lg shadow-sm border border-slate-200 hover:border-indigo-400 hover:shadow-md transition">
           <h2 class="font-semibold text-slate-800">Categorías</h2>
           <p class="text-xs text-slate-500 mt-2">
-            Crear, editar y eliminar categorías de cursos.
+            Administrar categorias disponibles en la plataforma.
           </p>
         </a>
 
@@ -33,7 +33,7 @@ export function renderAdminDashboard() {
         <div class="block p-4 bg-white rounded-lg shadow-sm border border-dashed border-slate-200">
           <h2 class="font-semibold text-slate-800">Próximamente</h2>
           <p class="text-xs text-slate-500 mt-2">
-            Reportes, ventas y más módulos del administrador.
+            panel de clientes
           </p>
         </div>
       </div>

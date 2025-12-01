@@ -3,115 +3,133 @@ import { renderPage } from "../layout/basepage.js";
 
 export function renderLoginPage() {
   const content = `
-    <section class="mt-10 flex justify-center">
-      <div class="w-full max-w-md bg-white rounded-xl shadow-md px-6 py-6">
-        <h1 class="text-2xl font-bold text-center text-indigo-600 mb-2">
+    <section class="max-w-md mx-auto bg-white shadow-sm rounded-xl p-8 mt-10">
+      <h1 class="text-2xl font-semibold text-slate-800 mb-4 text-center">
+        Iniciar sesión
+      </h1>
+      <p class="text-sm text-slate-600 mb-6 text-center">
+        Accede a tu cuenta de FreeEd para administrar tus cursos y compras.
+      </p>
+
+      <form id="login-form" class="space-y-4">
+        <div>
+          <label for="email" class="block text-sm font-medium text-slate-700 mb-1">
+            Correo electrónico
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            required
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            placeholder="tucorreo@ejemplo.com"
+          />
+        </div>
+
+        <div>
+          <label for="password" class="block text-sm font-medium text-slate-700 mb-1">
+            Contraseña
+          </label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            minlength="8"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            placeholder="Mínimo 8 caracteres"
+          />
+        </div>
+
+        <button
+          type="submit"
+          class="w-full mt-2 inline-flex justify-center items-center px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
           Iniciar sesión
-        </h1>
-        <p class="text-sm text-gray-600 text-center mb-6">
-          Accede a tu cuenta de FreeEd para continuar.
-        </p>
+        </button>
 
-        <form id="loginForm" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Correo electrónico
-            </label>
-            <input
-              type="email"
-              name="email"
-              required
-              class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="tucorreo@ejemplo.com"
-            />
-          </div>
+        <p id="login-message" class="mt-3 text-sm text-center"></p>
+      </form>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Contraseña
-            </label>
-            <input
-              type="password"
-              name="password"
-              required
-              minlength="8"
-              class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="••••••••"
-            />
-          </div>
-
-          <p id="loginMessage" class="text-sm mt-1"></p>
-
-          <button
-            type="submit"
-            class="w-full mt-2 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-500 transition"
-          >
-            Entrar
-          </button>
-        </form>
-      </div>
+      <p class="mt-6 text-xs text-slate-500 text-center">
+        ¿Aún no tienes cuenta?
+        <a href="/registro" class="text-indigo-600 hover:underline">
+          Regístrate aquí
+        </a>
+      </p>
     </section>
 
     <script>
-      (function () {
-        const form = document.getElementById("loginForm");
-        const msg  = document.getElementById("loginMessage");
-        if (!form || !msg) return;
+      const TOKEN_KEY = "freeed:token";
+      const USER_KEY  = "freeed:user";
 
-        form.addEventListener("submit", async function (e) {
+      document.addEventListener("DOMContentLoaded", () => {
+        const form = document.getElementById("login-form");
+        const msg  = document.getElementById("login-message");
+        if (!form) return;
+
+        form.addEventListener("submit", async (e) => {
           e.preventDefault();
-          msg.textContent = "Verificando credenciales...";
-          msg.className = "text-sm mt-1 text-gray-600";
+          if (msg) {
+            msg.textContent = "";
+            msg.className = "mt-3 text-sm text-center";
+          }
 
-          const formData = new FormData(form);
           const body = {
-            email: formData.get("email"),
-            password: formData.get("password"),
+            email: form.email.value,
+            password: form.password.value
           };
 
           try {
             const res = await fetch("/api/auth/login", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(body),
+              body: JSON.stringify(body)
             });
 
             if (!res.ok) {
               let errorText = "Credenciales inválidas";
               try {
                 const dataErr = await res.json();
-                if (dataErr && dataErr.message) errorText = dataErr.message;
+                if (dataErr && dataErr.error && dataErr.error.message) {
+                  errorText = dataErr.error.message;
+                }
               } catch (_) {}
               throw new Error(errorText);
             }
 
             const data = await res.json();
 
-            // Guardar token y nombre de usuario en localStorage
-            if (data && data.token) {
-              localStorage.setItem("freeed_token", data.token);
-            }
-            if (data && data.user && data.user.nombre) {
-              localStorage.setItem("freeed_user_name", data.user.nombre);
+            if (data && data.token && data.user) {
+              // limpiar claves viejas
+              localStorage.removeItem("freeed_token");
+              localStorage.removeItem("freeed_user_name");
+
+              localStorage.setItem(TOKEN_KEY, data.token);
+              localStorage.setItem(USER_KEY, JSON.stringify(data.user));
             }
 
-            msg.textContent = "Inicio de sesión correcto. Redirigiendo...";
-            msg.className = "text-sm mt-1 text-green-600";
+            if (msg) {
+              msg.textContent = "Inicio de sesión correcto. Redirigiendo...";
+              msg.className = "mt-3 text-sm text-center text-emerald-600";
+            }
 
-            setTimeout(function () {
+            setTimeout(() => {
               window.location.href = "/";
             }, 800);
           } catch (err) {
-            msg.textContent = err.message || "Ocurrió un error al iniciar sesión";
-            msg.className = "text-sm mt-1 text-red-600";
+            if (msg) {
+              msg.textContent = err.message || "Error al iniciar sesión.";
+              msg.className = "mt-3 text-sm text-center text-red-600";
+            }
           }
         });
-      })();
+      });
     </script>
   `;
 
   return renderPage({
-    title: "FreeEd | Login",
+    title: "Iniciar sesión · FreeEd",
     content,
   });
 }
