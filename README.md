@@ -35,72 +35,93 @@ Este repositorio contiene la primera entrega funcional del sistema, incluyendo a
 ## 📁 Estructura del Proyecto
 
 ```text
-src/
-  app.js
-  server.js
-
-  routes/
-    index.js
-    auth.routes.js
-    clientes.routes.js
-    categorias.routes.js
-    cursos.routes.js
-    frontend.routes.js
-
-  controllers/
-    auth.controller.js
-    cliente.controller.js
-    categoria.controller.js
-    curso.controller.js
-
-  services/
-    auth.service.js
-    cliente.service.js
-    categoria.service.js
-    curso.service.js
-
-  repositories/
-    cliente.repository.js
-    categoria.repository.js
-    curso.repository.js
-
-  models/
-    auth.model.js
-    cliente.model.js
-    categoria.model.js
-    curso.model.js
-
-  middlewares/
-    auth.js
-    errorHandler.js
-    notFound.js
-
-  utils/
-    db.js
-
-  frontend/
-    layout/
-      basepage.js
-    pages/
-      home.js
-      login.js
-      registro.js
-      admin/
-        dashboard.js
-        categoria.js
-        productos.js
-    errors/
-      ForbiddenPage.js
-      NotFoundPage.js
-    assets/
-      logo.png
-      logo_banner.png
-      icono.png
-
-bd/
-  freeed_db.sql
-
-.env
+\SRC
+│   app.js
+│   server.js
+│   
+├───bd
+│       freeed_db.mwb
+│       freeed_db.sql
+│       
+├───controllers
+│       auth.controller.js
+│       carrito.controller.js
+│       categoria.controller.js
+│       cliente.controller.js
+│       curso.controller.js
+│       pedido.controller.js
+│
+├───frontend
+│   ├───assets
+│   │       icono.png
+│   │       logo.png
+│   │       logo_banner.png
+│   │
+│   ├───layout
+│   │       adminLayout.js
+│   │       basepage.js
+│   │
+│   └───pages
+│       ├───admin
+│       │       categoria.js
+│       │       clientes.js
+│       │       dashboard.js
+│       │       pedidos.js
+│       │       productos.js
+│       │
+│       ├───client
+│       │       carrito.js
+│       │       miscursos.js
+│       │       perfil.js
+│       │
+│       ├───errors
+│       │       ForbiddenPage.js
+│       │       NotFoundPage.js
+│       │
+│       └───public
+│               home.js
+│               Loginc.js
+│               registro.js
+│
+├───middlewares
+│       auth.js
+│       errorHandler.js
+│       notFound.js
+│
+├───models
+│       auth.model.js
+│       categoria.model.js
+│       cliente.model.js
+│       curso.model.js
+│       pedido.model.js
+│       pedidoDetalle.model.js
+│
+├───repositories
+│       categoria.repository.js
+│       cliente.repository.js
+│       curso.repository.js
+│
+├───routes
+│       auth.routes.js
+│       carrito.routes.js
+│       categorias.routes.js
+│       clientes.routes.js
+│       cursos.routes.js
+│       frontend.routes.js
+│       index.js
+│       pedidos.routes.js
+│
+├───services
+│       auth.service.js
+│       carrito.service.js
+│       categoria.service.js
+│       cliente.service.js
+│       curso.service.js
+│       pedido.service.js
+│
+└───utils
+        adminSeed.js
+        db.js
 
 ```
 
