@@ -17,7 +17,7 @@ export const cursoService = {
     return curso;
   },
 
-  async crear({ instructorId, ...payload }) {
+  async crear(payload) {
     const parsed = CursoCreateSchema.safeParse(payload);
     if (!parsed.success) {
       const err = new Error("Datos de curso inválidos");
@@ -27,12 +27,9 @@ export const cursoService = {
     }
 
     try {
-      return await cursoRepository.create({
-        instructorId,
-        ...parsed.data
-      });
+      return await cursoRepository.create(parsed.data);
     } catch (e) {
-      // Clave foránea inválida (categoria_id)
+      // Error de FK: categoria_id no existe
       if (e?.code === "ER_NO_REFERENCED_ROW_2" || e?.errno === 1452) {
         const err = new Error("La categoría indicada no existe");
         err.status = 400;

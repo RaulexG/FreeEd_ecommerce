@@ -1,35 +1,20 @@
 // src/frontend/pages/admin/categoria.js
-import { renderPage } from "../../layout/basepage.js";
+import { renderAdminPage } from "../../layout/adminLayout.js";
 
 export function renderCategoriasPage() {
   const content = `
-    <section class="space-y-6">
-      <header class="flex items-center justify-between mb-2">
-        <div>
-          <p class="text-xs text-slate-400">
-            Admin / Catálogos / Categorías
-          </p>
-          <h1 class="text-2xl font-semibold text-slate-800 mt-1">
-            Categorías de cursos
-          </h1>
-          <p class="text-sm text-slate-500 mt-1">
-            Administra las categorías que organizan los cursos publicados en FreeEd.
-          </p>
-        </div>
-
-        <a
-          href="/admin"
-          class="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700"
-        >
-          ← Volver al panel
-        </a>
-      </header>
-
+    <section class="space-y-4">
       <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
         <div class="flex items-center justify-between gap-3 mb-4">
-          <h2 class="font-semibold text-slate-800 text-sm">
-            Listado de categorías
-          </h2>
+          <div>
+            <h2 class="font-semibold text-slate-800 text-sm">
+              Listado de categorías
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">
+              Categorías que organizan los cursos publicados en FreeEd.
+            </p>
+          </div>
+
           <button
             id="btn-new-category"
             class="px-3 py-1.5 text-xs rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
@@ -63,8 +48,16 @@ export function renderCategoriasPage() {
     <script>
       (function () {
         const TOKEN_KEY = "freeed:token";
+        const USER_KEY = "freeed:user";
+
         const tbody = document.getElementById("categorias-tbody");
         const btnNew = document.getElementById("btn-new-category");
+
+        function redirectToLogin() {
+          localStorage.removeItem(TOKEN_KEY);
+          localStorage.removeItem(USER_KEY);
+          window.location.href = "/login";
+        }
 
         function getToken() {
           return localStorage.getItem(TOKEN_KEY);
@@ -78,6 +71,27 @@ export function renderCategoriasPage() {
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
+        }
+
+        const rawToken = getToken();
+        const rawUser = localStorage.getItem(USER_KEY);
+
+        if (!rawToken || !rawUser) {
+          redirectToLogin();
+          return;
+        }
+
+        let user;
+        try {
+          user = JSON.parse(rawUser);
+        } catch (e) {
+          redirectToLogin();
+          return;
+        }
+
+        if (user.rol !== "ADMIN") {
+          window.location.href = "/";
+          return;
         }
 
         async function cargarCategorias() {
@@ -94,6 +108,11 @@ export function renderCategoriasPage() {
                 "Authorization": "Bearer " + token
               }
             });
+
+            if (resp.status === 401) {
+              redirectToLogin();
+              return;
+            }
 
             if (!resp.ok) {
               throw new Error("Error HTTP " + resp.status);
@@ -132,7 +151,11 @@ export function renderCategoriasPage() {
                         data-id="\${cat.id}"
                         class="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-red-200 text-red-600 hover:bg-red-50 text-xs"
                       >
-                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2zM18 4h-2.5l-.71-.71c-.18-.18-.44-.29-.7-.29H9.91c-.26 0-.52.11-.7.29L8.5 4H6c-.55 0-1 .45-1 1s.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             width="16" height="16" viewBox="0 0 24 24">
+                          <path fill="currentColor"
+                            d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2zm12-13h-2.5l-.71-.71A.996.996 0 0 0 14.09 5H9.91c-.26 0-.52.11-.7.29L8.5 6H6c-.55 0-1 .45-1 1s.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1"/>
+                        </svg>
                       </button>
                     </td>
                   </tr>
@@ -154,7 +177,6 @@ export function renderCategoriasPage() {
           }
         }
 
-        // ---------- MODAL CREAR CATEGORÍA ----------
         if (btnNew && window.Swal) {
           btnNew.addEventListener("click", async () => {
             const token = getToken();
@@ -210,7 +232,7 @@ export function renderCategoriasPage() {
               }
             });
 
-            if (!formValues) return; // cancelado
+            if (!formValues) return;
 
             try {
               const resp = await fetch("/api/categorias", {
@@ -258,7 +280,6 @@ export function renderCategoriasPage() {
           });
         }
 
-        // ---------- MODAL EDITAR CATEGORÍA ----------
         async function abrirEditarCategoria(cat) {
           const token = getToken();
           if (!token || !window.Swal) return;
@@ -315,7 +336,7 @@ export function renderCategoriasPage() {
             }
           });
 
-          if (!formValues) return; // cancelado
+          if (!formValues) return;
 
           try {
             const resp = await fetch("/api/categorias/" + cat.id, {
@@ -362,12 +383,10 @@ export function renderCategoriasPage() {
           }
         }
 
-        // ---------- DELEGACIÓN CLICK TABLA (ELIMINAR / EDITAR) ----------
         tbody.addEventListener("click", async (e) => {
           const token = getToken();
           if (!token || !window.Swal) return;
 
-          // 1) ¿Click en botón Eliminar?
           const btnDelete = e.target.closest("[data-action='delete']");
           if (btnDelete) {
             const id = btnDelete.dataset.id;
@@ -415,10 +434,9 @@ export function renderCategoriasPage() {
               });
             }
 
-            return; // ya manejamos el click
+            return;
           }
 
-          // 2) Si no fue botón eliminar, tratamos el click como EDITAR (fila completa)
           const row = e.target.closest("tr[data-id]");
           if (!row) return;
 
@@ -432,14 +450,15 @@ export function renderCategoriasPage() {
           abrirEditarCategoria(cat);
         });
 
-        // Cargar al entrar
         cargarCategorias();
       })();
     </script>
   `;
 
-  return renderPage({
+  return renderAdminPage({
     title: "FreeEd · Admin categorías",
+    pageTitle: "Categorías",
+    active: "categorias",
     content,
   });
 }

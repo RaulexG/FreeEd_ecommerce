@@ -1,16 +1,19 @@
 import { pool } from "../utils/db.js";
 
 export const clienteRepository = {
-  async findAll({ limit = 50, offset = 0 } = {}) {
+  // LISTAR TODOS
+  async findAll() {
     const [rows] = await pool.query(
       `SELECT 
-         id, nombre, email, rol, activo,
+         id,
+         nombre,
+         email,
+         rol,
+         activo,
          created_at AS createdAt,
          updated_at AS updatedAt
        FROM clientes
-       ORDER BY created_at DESC
-       LIMIT ? OFFSET ?`,
-      [Number(limit), Number(offset)]
+       ORDER BY created_at DESC`
     );
     return rows;
   },
@@ -18,7 +21,11 @@ export const clienteRepository = {
   async findById(id) {
     const [rows] = await pool.query(
       `SELECT 
-         id, nombre, email, rol, activo,
+         id,
+         nombre,
+         email,
+         rol,
+         activo,
          created_at AS createdAt,
          updated_at AS updatedAt
        FROM clientes
@@ -31,9 +38,14 @@ export const clienteRepository = {
   async findByEmail(email) {
     const [rows] = await pool.query(
       `SELECT 
-         id, nombre, email, rol, password_hash, activo,
+         id,
+         nombre,
+         email,
+         rol,
+         password_hash,
+         activo,
          created_at AS createdAt,
-         updated_at AS updatedAt
+         updated_at AS UpdatedAt
        FROM clientes
        WHERE email = ?`,
       [email]
@@ -50,7 +62,11 @@ export const clienteRepository = {
 
     const [rows] = await pool.query(
       `SELECT 
-         id, nombre, email, rol, activo,
+         id,
+         nombre,
+         email,
+         rol,
+         activo,
          created_at AS createdAt,
          updated_at AS updatedAt
        FROM clientes
@@ -100,9 +116,10 @@ export const clienteRepository = {
   },
 
   async remove(id) {
-    const [result] = await pool.query(`DELETE FROM clientes WHERE id = ?`, [
-      id,
-    ]);
+    const [result] = await pool.query(
+      `DELETE FROM clientes WHERE id = ?`,
+      [id]
+    );
     return result.affectedRows > 0;
   },
 };

@@ -1,29 +1,28 @@
 -- =========================================================
--- Script de creación de base de datos: freeed_db
 -- Proyecto: FreeEd - Plataforma de cursos digitales
 -- Autor: Raúl Chavira Narváez
+-- Versión: Modelo LMS + Ecommerce (un solo administrador)
 -- =========================================================
 
--- 1) Crear base de datos
+-- ============= CREACIÓN DE BASE DE DATOS =============
 CREATE DATABASE IF NOT EXISTS `freeed_db`
   DEFAULT CHARACTER SET utf8mb4
   COLLATE utf8mb4_general_ci;
 
--- 2) Usar la base
 USE `freeed_db`;
 
--- 3) Crear usuario del proyecto
+-- Crear usuario del proyecto
 CREATE USER IF NOT EXISTS 'Raulcn'@'localhost'
   IDENTIFIED BY 'FreeEd25';
 
--- 4) Otorgar permisos al usuario
+-- Otorgar permisos al usuario
 GRANT ALL PRIVILEGES ON `freeed_db`.*
   TO 'Raulcn'@'localhost';
 
 FLUSH PRIVILEGES;
 
 -- =========================================================
--- TABLA PRINCIPAL: CLIENTES
+-- CLIENTES 
 -- =========================================================
 
 CREATE TABLE IF NOT EXISTS `clientes` (
@@ -31,49 +30,23 @@ CREATE TABLE IF NOT EXISTS `clientes` (
   `nombre` VARCHAR(150) NOT NULL,
   `email` VARCHAR(150) NOT NULL,
   `password_hash` VARCHAR(255) NOT NULL,
+
+  -- Datos opcionales del perfil
+  `telefono` VARCHAR(30) NULL,
+  `avatar_url` VARCHAR(255) NULL,
+  `fecha_nacimiento` DATE NULL,
+  `genero` ENUM('MASCULINO','FEMENINO','OTRO') NULL,
+
   `rol` ENUM('CLIENTE','ADMIN') NOT NULL DEFAULT 'CLIENTE',
   `activo` TINYINT(1) NOT NULL DEFAULT 1,
+
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     ON UPDATE CURRENT_TIMESTAMP,
+
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_clientes_email` (`email`),
   KEY `idx_clientes_created_at` (`created_at`)
-) ENGINE=InnoDB
-  DEFAULT CHARSET=utf8mb4
-  COLLATE=utf8mb4_general_ci;
-
--- Usuario de prueba (se convertirá en admin más adelante)
-INSERT INTO `clientes` (nombre, email, password_hash, rol, activo)
-VALUES (
-  'raulex cn',
-  'raulex@gmail.com',
-  '$2a$12$gDE9u3UW5tZylwZNd7/a9.KPjz3dmh0CnfSvBfQCPeW2/2duStW8i',
-  'ADMIN',
-  1
-);
-
--- =========================================================
--- PERFILES DE ESTUDIANTE (ADMIN / CREADOR)
--- =========================================================
-
-CREATE TABLE IF NOT EXISTS `perfiles_estudiante` (
-  `cliente_id` BIGINT UNSIGNED NOT NULL,
-  `telefono` VARCHAR(30) NULL,
-  `carrera` VARCHAR(120) NULL,
-  `universidad` VARCHAR(150) NULL,
-  `ciudad` VARCHAR(120) NULL,
-  `pais` VARCHAR(120) NULL,
-  `bio` TEXT NULL,
-  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-    ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`cliente_id`),
-  CONSTRAINT `fk_perfiles_estudiante_cliente`
-    FOREIGN KEY (`cliente_id`)
-    REFERENCES `clientes`(`id`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_general_ci;
@@ -93,13 +66,13 @@ CREATE TABLE IF NOT EXISTS `categorias_curso` (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_general_ci;
 
+
 -- =========================================================
 -- CURSOS
 -- =========================================================
 
 CREATE TABLE IF NOT EXISTS `cursos` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `instructor_id` BIGINT UNSIGNED NOT NULL,
   `categoria_id` INT UNSIGNED NOT NULL,
   `titulo` VARCHAR(150) NOT NULL,
   `descripcion` TEXT NOT NULL,
@@ -112,13 +85,7 @@ CREATE TABLE IF NOT EXISTS `cursos` (
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_cursos_instructor` (`instructor_id`),
   KEY `idx_cursos_categoria` (`categoria_id`),
-  CONSTRAINT `fk_cursos_instructor`
-    FOREIGN KEY (`instructor_id`)
-    REFERENCES `clientes`(`id`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
   CONSTRAINT `fk_cursos_categoria`
     FOREIGN KEY (`categoria_id`)
     REFERENCES `categorias_curso`(`id`)
@@ -157,6 +124,7 @@ CREATE TABLE IF NOT EXISTS `pedidos` (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_general_ci;
 
+
 -- =========================================================
 -- DETALLES DE PEDIDO
 -- =========================================================
@@ -185,8 +153,9 @@ CREATE TABLE IF NOT EXISTS `pedido_detalles` (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_general_ci;
 
+
 -- =========================================================
--- RESEÑAS
+-- RESEÑAS DE CURSO
 -- =========================================================
 
 CREATE TABLE IF NOT EXISTS `reseñas_curso` (
@@ -213,5 +182,8 @@ CREATE TABLE IF NOT EXISTS `reseñas_curso` (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_general_ci;
 
--- Mostrar tablas creadas
+
+-- =========================================================
+-- VERIFICACIÓN
+-- =========================================================
 SHOW TABLES FROM freeed_db;

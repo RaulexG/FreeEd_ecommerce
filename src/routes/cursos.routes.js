@@ -11,9 +11,11 @@ import { authRequired } from "../middlewares/auth.js";
 
 const router = Router();
 
-// Todas protegidas para el panel admin
-router.get("/", authRequired, listarCursos);
-router.get("/:id", authRequired, obtenerCurso);
+// GET públicos 
+router.get("/", listarCursos);
+router.get("/:id", obtenerCurso);
+
+// Operaciones del panel admin 
 router.post("/", authRequired, crearCurso);
 router.patch("/:id", authRequired, actualizarCurso);
 router.delete("/:id", authRequired, eliminarCurso);

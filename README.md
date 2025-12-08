@@ -129,16 +129,16 @@ Crea un archivo `.env` en la raíz del proyecto con el siguiente contenido:
 # Servidor HTTP
 PORT=8080
 
-# Base de datos
+# Base de datos MySQL
 MYSQL_HOST=localhost
-MYSQL_PORT=3306
+MYSQL_PORT=3307          
 MYSQL_USER=Raulcn
 MYSQL_PASSWORD=FreeEd25
 MYSQL_DB=freeed_db
 MYSQL_CONN_LIMIT=10
 
-# JWT
-JWT_SECRET=CAMBIA_ESTE_VALOR
+# Autenticación JWT
+JWT_SECRET=52873c54485ca62091dc230ea0b1185215e4f175bb411b1991e163a6c814fb94
 JWT_EXPIRES_IN=1h
 ```
 

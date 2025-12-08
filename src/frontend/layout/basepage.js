@@ -7,9 +7,9 @@ export function renderPage({ title = "FreeEd", content = "" }) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>${title}</title>
 
+  <!-- Favicon -->
   <link rel="icon" type="image/png" href="/static/icono.png" />
 
   <!-- Tailwind CDN -->
@@ -18,128 +18,186 @@ export function renderPage({ title = "FreeEd", content = "" }) {
   <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-
-  <!-- Fuente opcional -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
     rel="stylesheet"
-  >
+  />
 
   <style>
-    body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
+    body { font-family: 'Inter', sans-serif; }
+    .nav-icon-btn:hover { opacity: .75; }
   </style>
 </head>
 
-<body class="bg-slate-100 min-h-screen flex flex-col">
-  <!-- NAVBAR ÚNICO -->
-  <header class="bg-white border-b border-slate-200">
-    <nav class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+<body class="bg-slate-50 min-h-screen flex flex-col">
+
+  <!-- ========================= NAVBAR ========================= -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+    <nav class="max-w-7xl mx-auto px-4 lg:px-8 h-16 flex items-center justify-between">
+
+      <!-- LEFT: LOGO -->
       <a href="/" class="flex items-center gap-2">
-        <img src="/static/logo.png" alt="FreeEd" class="h-8 w-auto" />
-        <span class="font-semibold text-lg text-indigo-700 tracking-tight">
-          FreeEd
-        </span>
+        <img src="/static/logo.png" class="h-7" alt="FreeEd" />
       </a>
 
-      <div id="navbar-right" class="flex items-center gap-4 text-sm">
-        <!-- Versión por defecto (sin sesión) -->
-        <a href="/" class="text-slate-700 hover:text-indigo-600 font-medium text-xs sm:text-sm">
-          Inicio
-        </a>
-        <a href="/login" class="px-3 py-1.5 rounded-md border border-indigo-600 text-indigo-600 hover:bg-indigo-50 font-medium text-xs">
-          Iniciar sesión
-        </a>
-        <a href="/registro" class="px-3 py-1.5 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 font-medium text-xs">
-          Registrarse
-        </a>
+      <!-- CENTER: SEARCH BAR (por ahora visual, luego lo ligamos a cursos) -->
+      <div class="hidden md:flex flex-1 mx-8">
+        <div class="flex items-center bg-slate-100 w-full px-3 py-2 rounded-full shadow-inner">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z" />
+          </svg>
+          <input
+            type="text"
+            placeholder="¿Qué quieres aprender hoy?"
+            class="bg-transparent flex-1 outline-none px-2 text-sm"
+          />
+        </div>
       </div>
+
+      <!-- RIGHT: NAV ACTIONS -->
+      <div id="navbar-right" class="flex items-center gap-4 text-sm"></div>
+
     </nav>
+
+    <!-- Barra de categorías (por ahora vacía hasta conectarla a /api/categorias) -->
+    <div class="bg-white border-t border-slate-200" id="navbar-categories"></div>
   </header>
 
-  <!-- CONTENIDO PRINCIPAL -->
+
+  <!-- ===================== MAIN CONTENT ===================== -->
   <main class="flex-1">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-7xl mx-auto px-4 lg:px-8 py-8">
       ${content}
     </div>
   </main>
 
-  <!-- FOOTER -->
-  <footer class="bg-white border-t border-slate-200">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+
+  <!-- ========================= FOOTER ========================= -->
+  <footer class="bg-white border-t border-slate-200 mt-10 py-5">
+    <div class="max-w-7xl mx-auto px-4 lg:px-8 text-xs text-slate-500 flex justify-between">
       <span>© ${new Date().getFullYear()} FreeEd · Proyecto académico E-Business.</span>
       <span>Desarrollado por Raúl Chavira Narváez.</span>
     </div>
   </footer>
 
-  <!-- SCRIPT: Manejo de sesión en la barra -->
+
+  <!-- ========================= NAVBAR SCRIPT ========================= -->
   <script>
     (function () {
       const TOKEN_KEY = "freeed:token";
-      const USER_KEY = "freeed:user";
-
-      function getUser() {
-        try {
-          const raw = localStorage.getItem(USER_KEY);
-          if (!raw) return null;
-          return JSON.parse(raw);
-        } catch (_) {
-          return null;
-        }
-      }
+      const USER_KEY  = "freeed:user";
+      const CART_KEY  = "freeed:cart";
 
       const navbarRight = document.getElementById("navbar-right");
-      if (!navbarRight) return;
+      const categoryBar = document.getElementById("navbar-categories");
 
       const token = localStorage.getItem(TOKEN_KEY);
-      const user = getUser();
+      let user = null;
 
-      // Si no hay sesión, dejamos los botones por defecto
+      try {
+        user = JSON.parse(localStorage.getItem(USER_KEY));
+      } catch (_) {}
+
+      // Siempre, por ahora, SIN categorías fake:
+      if (categoryBar) {
+        categoryBar.innerHTML = "";
+      }
+
+      // ===========================
+      // SIN SESIÓN
+      // ===========================
       if (!token || !user) {
-        navbarRight.innerHTML = \`
-          <a href="/" class="text-slate-700 hover:text-indigo-600 font-medium text-xs sm:text-sm">
-            Inicio
-          </a>
-          <a href="/login" class="px-3 py-1.5 rounded-md border border-indigo-600 text-indigo-600 hover:bg-indigo-50 font-medium text-xs">
-            Iniciar sesión
-          </a>
-          <a href="/registro" class="px-3 py-1.5 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 font-medium text-xs">
-            Registrarse
-          </a>
-        \`;
+        if (navbarRight) {
+          navbarRight.innerHTML = \`
+            <a href="/login" class="text-slate-700 hover:text-indigo-600 font-medium">
+              Acceder
+            </a>
+          \`;
+        }
         return;
       }
 
-      const isAdmin = user.rol === "ADMIN";
-      const nombre = user.nombre || user.email || "usuario";
+      // ===========================
+      // CON SESIÓN (CLIENTE / ADMIN)
+      // ===========================
+      const isAdmin = user?.rol === "ADMIN";
+      const nombre  = (user?.nombre || "Perfil").split(" ")[0];
+
+      let cart = [];
+      try {
+        cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
+      } catch (_) {}
+      const cartCount = cart.length;
 
       const adminLink = isAdmin
-        ? \`<a href="/admin" class="text-slate-700 hover:text-indigo-600 font-medium text-xs sm:text-sm">Admin</a>\`
+        ? '<a href="/admin" class="text-slate-700 hover:text-indigo-600 font-medium">Panel Admin</a>'
         : "";
 
-      navbarRight.innerHTML = \`
-        <a href="/" class="text-slate-700 hover:text-indigo-600 font-medium text-xs sm:text-sm">
-          Inicio
-        </a>
-        \${adminLink}
-        <span class="hidden sm:inline text-xs text-slate-600">
-          Hola, <span class="font-semibold">\${nombre}</span>
-        </span>
-        <button
-          id="btn-logout"
-          class="px-3 py-1.5 rounded-md border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-medium"
-        >
-          Cerrar sesión
-        </button>
-      \`;
+      if (navbarRight) {
+        navbarRight.innerHTML = \`
+          \${adminLink}
 
-      const btn = document.getElementById("btn-logout");
-      if (btn) {
-        btn.addEventListener("click", function () {
+          <!-- Carrito -->
+          <button id="btn-cart" class="relative nav-icon-btn">
+            <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 3h2l.4 2M7 13h10l3-8H6.4M7 13L5.4 5M7 13l-2 9m5-9v9m4-9v9m4-9l2 9" />
+            </svg>
+            <span class="absolute -top-2 -right-2 bg-indigo-600 text-white text-xs rounded-full px-1">
+              \${cartCount}
+            </span>
+          </button>
+
+          <!-- Perfil -->
+          <div class="relative">
+            <button id="btn-profile"
+              class="w-8 h-8 rounded-full bg-indigo-200 flex items-center justify-center font-bold text-indigo-700">
+              \${nombre.charAt(0).toUpperCase()}
+            </button>
+
+            <div id="profile-menu"
+              class="hidden absolute right-0 mt-2 bg-white shadow-lg rounded-md w-40 border border-slate-100">
+              <div class="px-4 py-2 text-xs text-slate-500">\${user.email || ""}</div>
+              <a href="/client/miscursos" class="block px-4 py-2 hover:bg-slate-100 text-sm">Mi aprendizaje</a>
+              <a href="/client/perfil" class="block px-4 py-2 hover:bg-slate-100 text-sm">Mi perfil</a>
+              <button id="logout-btn"
+                class="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 text-sm">
+                Cerrar sesión
+              </button>
+            </div>
+          </div>
+        \`;
+      }
+
+      // Eventos: menú perfil + logout
+      const profileBtn  = document.getElementById("btn-profile");
+      const profileMenu = document.getElementById("profile-menu");
+      const logoutBtn   = document.getElementById("logout-btn");
+
+      if (profileBtn && profileMenu) {
+        profileBtn.addEventListener("click", () => {
+          profileMenu.classList.toggle("hidden");
+        });
+      }
+
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
           localStorage.removeItem(TOKEN_KEY);
           localStorage.removeItem(USER_KEY);
+          localStorage.removeItem(CART_KEY);
           window.location.href = "/";
+        });
+      }
+
+      // Botón carrito -> página de carrito del cliente
+      const btnCart = document.getElementById("btn-cart");
+      if (btnCart) {
+        btnCart.addEventListener("click", () => {
+          window.location.href = "/client/carrito";
         });
       }
     })();

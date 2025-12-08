@@ -11,8 +11,11 @@ import { authRequired } from "../middlewares/auth.js";
 
 const router = Router();
 
-router.get("/", authRequired, listarCategorias);
-router.get("/:id", authRequired, obtenerCategoria);
+// GET públicos 
+router.get("/", listarCategorias);
+router.get("/:id", obtenerCategoria);
+
+// protegidas 
 router.post("/", authRequired, crearCategoria);
 router.patch("/:id", authRequired, actualizarCategoria);
 router.delete("/:id", authRequired, eliminarCategoria);

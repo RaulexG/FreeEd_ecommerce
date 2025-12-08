@@ -1,5 +1,5 @@
 // src/frontend/pages/registro.js
-import { renderPage } from "../layout/basepage.js";
+import { renderPage } from "../../layout/basepage.js";
 
 export function renderRegistroPage() {
   const content = `
