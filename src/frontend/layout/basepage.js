@@ -43,7 +43,7 @@ export function renderPage({ title = "FreeEd", content = "" }) {
         <img src="/static/logo.png" class="h-7" alt="FreeEd" />
       </a>
 
-      <!-- CENTER: SEARCH BAR (por ahora visual, luego lo ligamos a cursos) -->
+      <!-- CENTER: SEARCH BAR -->
       <div class="hidden md:flex flex-1 mx-8">
         <div class="flex items-center bg-slate-100 w-full px-3 py-2 rounded-full shadow-inner">
           <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,7 +63,6 @@ export function renderPage({ title = "FreeEd", content = "" }) {
 
     </nav>
 
-    <!-- Barra de categorías (por ahora vacía hasta conectarla a /api/categorias) -->
     <div class="bg-white border-t border-slate-200" id="navbar-categories"></div>
   </header>
 
@@ -90,7 +89,6 @@ export function renderPage({ title = "FreeEd", content = "" }) {
     (function () {
       const TOKEN_KEY = "freeed:token";
       const USER_KEY  = "freeed:user";
-      const CART_KEY  = "freeed:cart";
 
       const navbarRight = document.getElementById("navbar-right");
       const categoryBar = document.getElementById("navbar-categories");
@@ -102,7 +100,6 @@ export function renderPage({ title = "FreeEd", content = "" }) {
         user = JSON.parse(localStorage.getItem(USER_KEY));
       } catch (_) {}
 
-      // Siempre, por ahora, SIN categorías fake:
       if (categoryBar) {
         categoryBar.innerHTML = "";
       }
@@ -127,12 +124,6 @@ export function renderPage({ title = "FreeEd", content = "" }) {
       const isAdmin = user?.rol === "ADMIN";
       const nombre  = (user?.nombre || "Perfil").split(" ")[0];
 
-      let cart = [];
-      try {
-        cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
-      } catch (_) {}
-      const cartCount = cart.length;
-
       const adminLink = isAdmin
         ? '<a href="/admin" class="text-slate-700 hover:text-indigo-600 font-medium">Panel Admin</a>'
         : "";
@@ -147,8 +138,9 @@ export function renderPage({ title = "FreeEd", content = "" }) {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M3 3h2l.4 2M7 13h10l3-8H6.4M7 13L5.4 5M7 13l-2 9m5-9v9m4-9v9m4-9l2 9" />
             </svg>
-            <span class="absolute -top-2 -right-2 bg-indigo-600 text-white text-xs rounded-full px-1">
-              \${cartCount}
+            <span id="navbar-cart-count"
+                  class="absolute -top-2 -right-2 bg-indigo-600 text-white text-xs rounded-full px-1">
+              0
             </span>
           </button>
 
@@ -173,10 +165,10 @@ export function renderPage({ title = "FreeEd", content = "" }) {
         \`;
       }
 
-      // Eventos: menú perfil + logout
       const profileBtn  = document.getElementById("btn-profile");
       const profileMenu = document.getElementById("profile-menu");
       const logoutBtn   = document.getElementById("logout-btn");
+      const btnCart     = document.getElementById("btn-cart");
 
       if (profileBtn && profileMenu) {
         profileBtn.addEventListener("click", () => {
@@ -188,18 +180,49 @@ export function renderPage({ title = "FreeEd", content = "" }) {
         logoutBtn.addEventListener("click", () => {
           localStorage.removeItem(TOKEN_KEY);
           localStorage.removeItem(USER_KEY);
-          localStorage.removeItem(CART_KEY);
           window.location.href = "/";
         });
       }
 
-      // Botón carrito -> página de carrito del cliente
-      const btnCart = document.getElementById("btn-cart");
       if (btnCart) {
         btnCart.addEventListener("click", () => {
           window.location.href = "/client/carrito";
         });
       }
+
+      // ===========================
+      // SINCRONIZAR BADGE DESDE API
+      // ===========================
+      async function syncCartBadge() {
+        const badge = document.getElementById("navbar-cart-count");
+        if (!badge || !token) return;
+
+        try {
+          const resp = await fetch("/api/carrito", {
+            headers: {
+              "Accept": "application/json",
+              "Authorization": "Bearer " + token
+            }
+          });
+
+          if (!resp.ok) {
+            console.error("No se pudo obtener carrito (badge):", resp.status);
+            return;
+          }
+
+          const data = await resp.json();
+          const detalles = data.detalles || [];
+          badge.textContent = detalles.length || 0;
+        } catch (e) {
+          console.error("Error al sincronizar badge de carrito:", e);
+        }
+      }
+
+      // la dejamos accesible para otras páginas (home.js)
+      window.freeedSyncCartBadge = syncCartBadge;
+
+      // sincronizar al cargar
+      syncCartBadge();
     })();
   </script>
 </body>

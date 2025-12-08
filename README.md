@@ -146,29 +146,20 @@ JWT_EXPIRES_IN=1h
 
 ### 4️⃣ Crear la Base de Datos
 
-El archivo `bd/freeed_db.sql` incluye toda la estructura del proyecto:
+El archivo `bd/freeed_db.sql` contiene:
 
-- clientes
-- perfiles_estudiante
-- categorias_curso
-- cursos
-- pedidos
-- pedido_detalles
-- reseñas_curso
+Creación de la BD `freeed_db`
 
-Incluye también:
-- Creación de la base `freeed_db`
-- Creación de usuario MySQL `Raulcn` (Password: FreeEd25)
-- Inserción de usuario demo
+Usuario MySQL `Raulcn` (password `FreeEd25`)
 
-**Opción A: CLI**
 
+#### Opción A – CLI
 ```bash
 mysql -u root -p
-SOURCE ruta/archivo/freeed_db.sql;
+SOURCE ruta/freeed_db.sql;
 ```
 
-**Opción B: Workbench**
+#### Opción B – Workbench
 
 1. Abrir Workbench
 2. Conectarse como root
@@ -177,149 +168,159 @@ SOURCE ruta/archivo/freeed_db.sql;
 
 ### 5️⃣ Ejecutar la API
 
-**Modo desarrollo:**
+#### Desarrollo:
 ```bash
 npm run dev
 ```
 
-**Modo producción:**
+#### Producción:
 ```bash
 npm start
 ```
 
-Servidor disponible en: [http://localhost:8080/](http://localhost:8080/)
+Servidor:
+👉 [http://localhost:8080/](http://localhost:8080/)
 
 ---
 
-## 🔌 Endpoints Principales
+## 🔌 Endpoints Actualizados (Backend)
 
-### FreeEd Check
+### 📍 Health Check
 
-`GET /`
+**GET** `/`
 
-Devuelve:
 ```json
 { "ok": true, "msg": "FreeEd API viva" }
 ```
 
 ### 🔐 Autenticación
 
-`POST /api/auth/login`
+**POST** `/api/auth/login`
 
-Body:
+**Body:**
 ```json
 {
   "email": "raulex@gmail.com",
-  "password": "tu_password"
+  "password": "Admin123"
 }
 ```
 
-Respuesta:
+**Respuesta:**
 ```json
 {
-  "token": "JWT_AQUI",
-  "user": {
-    "id": 1,
-    "nombre": "raulex cn",
-    "email": "raulex@gmail.com"
-  }
+  "token": "JWT",
+  "user": { "id": 1, "nombre": "Raúl", "rol": "CLIENTE" }
 }
 ```
 
-Enviar el token:
-```
-Authorization: Bearer <token>
-```
-
-🔌 Endpoints Principales
-🔐 Autenticación
-
-POST /api/auth/login
-
-👤 Clientes
-
-Rutas protegidas:
-
-GET /api/clientes
-
-GET /api/clientes/:id
-
-POST /api/clientes
-
-PATCH /api/clientes/:id
-
-DELETE /api/clientes/:id
-
-📂 Categorías
-
-(Protegidas con JWT)
-
-GET /api/categorias
-
-GET /api/categorias/:id
-
-POST /api/categorias
-
-PATCH /api/categorias/:id
-
-DELETE /api/categorias/:id
-
-🎓 Cursos
-
-(Protegidas con JWT)
-
-GET /api/cursos
-
-GET /api/cursos/:id
-
-POST /api/cursos
-
-PATCH /api/cursos/:id
-
-DELETE /api/cursos/:id
-
-## 🧩 Modelo de Datos – Resumen
-
-Relaciones principales:
-
-- clientes 1 — N cursos
-- clientes 1 — N pedidos
-- cursos 1 — N pedidos
-- pedidos 1 — N pedido_detalles
-- clientes 1 — N reseñas (como autor)
-- clientes 1 — N reseñas (como receptor)
-
-Base sólida para:
-- ✔ Publicación de cursos
-- ✔ Compra de cursos
-- ✔ Reseñas
-- ✔ Historial de compras
+Enviar token:
+`Authorization: Bearer <token>`
 
 ---
 
-## 🗂️ Fases del Proyecto
+### 👤 Clientes
 
-### ✔ Entrega 1 – COMPLETADA
-- Autenticación funcional
-- Login + JWT
-- Tabla clientes
-- BD completa creada
-- Frontend base (home, login, registro)
+(Protegido por JWT)
 
-### ✔ Entrega 2
-- CRUD de categorías
-- CRUD de cursos
+| Método | Endpoint             | Descripción       |
+|--------|-----------------------|-------------------|
+| GET    | `/api/clientes`       | Lista todos       |
+| GET    | `/api/clientes/:id`   | Obtiene uno       |
+| POST   | `/api/clientes`       | Crea cliente      |
+| PATCH  | `/api/clientes/:id`   | Actualiza         |
+| DELETE | `/api/clientes/:id`   | Elimina           |
 
-### ⏳ Entrega 3
-- Pedidos
-- Detalles de pedido
-- Reseñas
-- Publicación final
+---
+
+### 📂 Categorías
+
+| Método | Endpoint             | Descripción       |
+|--------|-----------------------|-------------------|
+| GET    | `/api/categorias`     | Listado público   |
+| GET    | `/api/categorias/:id` | Una categoría     |
+| POST   | `/api/categorias`     | Crear (Admin)     |
+| PATCH  | `/api/categorias/:id` | Editar (Admin)    |
+| DELETE | `/api/categorias/:id` | Eliminar (Admin)  |
+
+---
+
+### 🎓 Cursos
+
+| Método | Endpoint             | Descripción       |
+|--------|-----------------------|-------------------|
+| GET    | `/api/cursos`         | Listado público   |
+| GET    | `/api/cursos/:id`     | Un curso          |
+| POST   | `/api/cursos`         | Crear (Admin)     |
+| PATCH  | `/api/cursos/:id`     | Editar (Admin)    |
+| DELETE | `/api/cursos/:id`     | Eliminar (Admin)  |
+
+---
+
+### 🛒 Carrito de Compra
+
+Todos requieren autenticación.
+
+| Método | Endpoint                   | Descripción               |
+|--------|-----------------------------|---------------------------|
+| GET    | `/api/carrito`             | Obtiene carrito activo    |
+| POST   | `/api/carrito/items`       | Agrega curso              |
+| PATCH  | `/api/carrito/items/:id`   | Actualiza cantidad        |
+| DELETE | `/api/carrito/items/:id`   | Elimina un item           |
+| DELETE | `/api/carrito`             | Vacía carrito             |
+| POST   | `/api/carrito/confirmar`   | Convierte carrito → pedido|
+
+---
+
+### 🧾 Pedidos (Cliente + Admin)
+
+#### Cliente
+
+| Método | Endpoint                 | Descripción       |
+|--------|---------------------------|-------------------|
+| GET    | `/api/pedidos/mios`      | Lista mis pedidos |
+| GET    | `/api/pedidos/mios/:id`  | Detalle de mi pedido |
+
+#### Admin
+
+| Método | Endpoint                 | Descripción       |
+|--------|---------------------------|-------------------|
+| GET    | `/api/pedidos`           | Todos los pedidos |
+| GET    | `/api/pedidos/:id`       | Detalle           |
+| PATCH  | `/api/pedidos/:id`       | Cambiar estado    |
+
+---
+
+Soporta:
+
+✔ Compras reales  
+✔ Historial del cliente  
+✔ Administración completa  
+✔ Cursos listados por usuario  
+
+---
+
+## 🚀 Fases del Proyecto
+
+- **✔ Entrega 1**
+  - Login y JWT
+  - Sistema de clientes
+  - BD completa
+  - Frontend base
+
+- **✔ Entrega 2**
+  - Gestión de categorías
+  - Gestión de cursos
+
+- **✔ Entrega 3 (Actual)**
+  - Carrito con BD
+  - Confirmación de compra → pedido
+  - Sección "Mis cursos"
+  - Panel Admin completo
 
 ---
 
 ## 👤 Autor
 
-Raúl Chavira Narváez  
+**Raúl Chavira Narváez**  
 Ingeniería en Sistemas – TecNM Tuxtla  
 Proyecto académico: FreeEd – Plataforma Estudiantil de Cursos

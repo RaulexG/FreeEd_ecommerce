@@ -55,7 +55,7 @@ export function renderHomePage() {
                 Certificados descargables
               </p>
               <p>
-                Al completar cada curso 
+                Al completar cada curso
               </p>
             </div>
           </div>
@@ -75,7 +75,8 @@ export function renderHomePage() {
             class="absolute -bottom-6 left-4 bg-white rounded-xl shadow-lg px-4 py-3 text-xs sm:text-sm"
           >
             <p class="font-semibold text-slate-800 mb-1">
-              Certificado oficial 
+              Certificado oficial
+            </p>
             <p class="text-slate-500">
               Al completar cada curso registrado en FreeEd.
             </p>
@@ -83,7 +84,6 @@ export function renderHomePage() {
         </div>
       </section>
 
-    
 
       <!-- CATEGORÍAS (PÚBLICAS) -->
       <section class="space-y-3">
@@ -123,7 +123,7 @@ export function renderHomePage() {
       >
         <div>
           <p class="text-2xl font-bold mb-1">3.5k+</p>
-          <p class="text-sm font-medium">Estudiantes </p>
+          <p class="text-sm font-medium">Estudiantes</p>
           <p class="text-xs text-slate-300 mt-1">
             Dato de ejemplo para mostrar cómo se verían las métricas reales.
           </p>
@@ -148,10 +148,14 @@ export function renderHomePage() {
     <script>
       (function () {
         const TOKEN_KEY = "freeed:token";
-        const CART_KEY = "freeed:cart";
 
         const catContainer = document.getElementById("home-categories");
         const coursesContainer = document.getElementById("home-courses");
+
+        if (!catContainer || !coursesContainer) {
+          console.warn("Contenedores de home no encontrados");
+          return;
+        }
 
         // estado en memoria
         let categoriasCache = [];
@@ -169,7 +173,6 @@ export function renderHomePage() {
             ...(options.headers || {}),
           };
 
-          // Si hay token lo mandamos; si no, va sin auth
           if (token) {
             headers["Authorization"] = "Bearer " + token;
           }
@@ -244,7 +247,6 @@ export function renderHomePage() {
 
             // Solo categorías activas
             categoriasCache = data.filter((c) => c.activo);
-
             renderCategories();
           } catch (err) {
             console.error("Error cargando categorías:", err);
@@ -253,20 +255,52 @@ export function renderHomePage() {
           }
         }
 
-        /* ========== CARRITO (LOCALSTORAGE) ========== */
-        function addToCart(curso) {
-          try {
-            const raw = localStorage.getItem(CART_KEY) || "[]";
-            const cart = JSON.parse(raw);
+        /* ========== AÑADIR AL CARRITO (USA API BACKEND) ========== */
+        async function addToCart(curso) {
+          const token = getToken();
 
-            const exists = cart.some((item) => item.id === curso.id);
-            if (!exists) {
-              cart.push({
-                id: curso.id,
-                titulo: curso.titulo,
-                precio: Number(curso.precio) || 0,
+          if (!token) {
+            if (window.Swal) {
+              await Swal.fire({
+                icon: "info",
+                title: "Inicia sesión",
+                text: "Debes iniciar sesión para añadir cursos al carrito.",
+                confirmButtonText: "Ir a iniciar sesión",
               });
-              localStorage.setItem(CART_KEY, JSON.stringify(cart));
+            } else {
+              alert("Debes iniciar sesión para añadir cursos al carrito.");
+            }
+            window.location.href = "/login";
+            return;
+          }
+
+          try {
+            const resp = await fetch("/api/carrito/items", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token,
+              },
+              body: JSON.stringify({
+                cursoId: curso.id,
+                cantidad: 1,
+              }),
+            });
+
+            if (resp.status === 401) {
+              localStorage.removeItem(TOKEN_KEY);
+              localStorage.removeItem("freeed:user");
+              window.location.href = "/login";
+              return;
+            }
+
+            if (!resp.ok) {
+              throw new Error("HTTP " + resp.status);
+            }
+
+            // Actualizar numerito del carrito desde backend
+            if (window.freeedSyncCartBadge) {
+              window.freeedSyncCartBadge();
             }
 
             if (window.Swal) {
@@ -281,7 +315,16 @@ export function renderHomePage() {
               alert("Curso añadido al carrito.");
             }
           } catch (e) {
-            console.error("Error al guardar en carrito:", e);
+            console.error("Error añadiendo al carrito:", e);
+            if (window.Swal) {
+              Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "No se pudo añadir el curso al carrito.",
+              });
+            } else {
+              alert("No se pudo añadir el curso al carrito.");
+            }
           }
         }
 

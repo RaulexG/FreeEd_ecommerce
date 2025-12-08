@@ -7,7 +7,7 @@ export function renderMisCursosPage() {
       <header class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
           <p class="text-xs uppercase tracking-wide text-indigo-600 font-semibold mb-1">
-            Mi aprendizaje
+            MI APRENDIZAJE
           </p>
           <h1 class="text-2xl font-bold text-slate-900">Mis cursos</h1>
           <p class="text-sm text-slate-500 mt-1">
@@ -25,9 +25,8 @@ export function renderMisCursosPage() {
 
     <script>
       (function () {
-        const TOKEN_KEY    = "freeed:token";
-        const USER_KEY     = "freeed:user";
-        const LEARNING_KEY = "freeed:learning";
+        const TOKEN_KEY = "freeed:token";
+        const USER_KEY  = "freeed:user";
 
         const root = document.getElementById("miscursos-root");
 
@@ -37,29 +36,49 @@ export function renderMisCursosPage() {
           window.location.href = "/login";
         }
 
-        const token = localStorage.getItem(TOKEN_KEY);
-        let user = null;
-        try { user = JSON.parse(localStorage.getItem(USER_KEY)); } catch (_) {}
+        // ================== VALIDAR SESIÓN ==================
+        const token   = localStorage.getItem(TOKEN_KEY);
+        const rawUser = localStorage.getItem(USER_KEY);
 
-        if (!token || !user) {
+        if (!token || !rawUser) {
           redirectToLogin();
           return;
         }
 
-        // Solo clientes
+        let user = null;
+        try {
+          user = JSON.parse(rawUser);
+        } catch {
+          redirectToLogin();
+          return;
+        }
+
+        // Solo CLIENTE puede ver esta página
         if (user.rol !== "CLIENTE") {
           window.location.href = "/";
           return;
         }
 
-        function loadLearning() {
-          try {
-            const raw  = localStorage.getItem(LEARNING_KEY) || "[]";
-            const list = JSON.parse(raw);
-            return Array.isArray(list) ? list : [];
-          } catch (_) {
-            return [];
+        // ================== HELPERS ==================
+        async function fetchJson(url, options = {}) {
+          const headers = {
+            Accept: "application/json",
+            ...(options.headers || {}),
+            Authorization: "Bearer " + token,
+          };
+
+          const resp = await fetch(url, { ...options, headers });
+
+          if (resp.status === 401) {
+            redirectToLogin();
+            throw new Error("No autorizado");
           }
+
+          if (!resp.ok) {
+            throw new Error("HTTP " + resp.status + " en " + url);
+          }
+
+          return resp.json();
         }
 
         function formatDate(iso) {
@@ -69,20 +88,20 @@ export function renderMisCursosPage() {
             return d.toLocaleDateString("es-MX", {
               year: "numeric",
               month: "short",
-              day: "2-digit"
+              day: "2-digit",
             });
           } catch {
             return iso;
           }
         }
 
-        function render() {
-          const learning = loadLearning();
-
-          if (!learning.length) {
+        function renderCursos(learning) {
+          if (!Array.isArray(learning) || !learning.length) {
             root.innerHTML = \`
               <div class="bg-white border border-slate-200 rounded-xl p-8 text-center space-y-3">
-                <p class="text-sm font-medium text-slate-800">Aún no tienes cursos registrados</p>
+                <p class="text-sm font-medium text-slate-800">
+                  Aún no tienes cursos registrados
+                </p>
                 <p class="text-sm text-slate-500">
                   Cuando confirmes una compra desde el carrito, tus cursos aparecerán aquí.
                 </p>
@@ -94,32 +113,48 @@ export function renderMisCursosPage() {
             return;
           }
 
-          // Aplanar todos los cursos de todos los pedidos
-          const courseMap = new Map(); // para evitar duplicados por pedido/curso
-          learning.forEach(entry => {
-            const pedido   = entry.pedido   || {};
-            const detalles = Array.isArray(entry.detalles) ? entry.detalles : [];
+          // learning = [ { pedido, detalles: [...] }, ... ]
+          const courseMap = new Map();
 
-            detalles.forEach(d => {
-              const key = \`\${pedido.id || "p"}-\${d.curso_id || d.cursoId || d.id}\`;
+          learning.forEach((entry) => {
+            const pedido   = entry.pedido || entry || {};
+            const detalles = Array.isArray(entry.detalles)
+              ? entry.detalles
+              : Array.isArray(pedido.detalles)
+                ? pedido.detalles
+                : [];
+
+            detalles.forEach((d) => {
+              const cursoId = d.curso_id ?? d.cursoId ?? d.id;
+              if (!cursoId) return;
+
+              // clave por id de curso para no duplicar
+              const key = String(cursoId);
+
               if (!courseMap.has(key)) {
                 courseMap.set(key, {
-                  pedidoId:    pedido.id,
-                  fecha:       pedido.created_at || pedido.createdAt,
-                  titulo:      d.curso_titulo || d.cursoTitulo || ("Curso #" + (d.curso_id || d.cursoId || d.id)),
-                  portada:     d.curso_portada || d.cursoPortada || "https://via.placeholder.com/600x360?text=FreeEd+Curso",
-                  nivel:       d.curso_nivel || d.cursoNivel || "-",
-                  precio:      d.precio_unitario ?? d.precioUnitario ?? 0
+                  pedidoId: pedido.id,
+                  fecha:    pedido.created_at || pedido.createdAt || pedido.fecha,
+                  titulo:
+                    d.curso_titulo ||
+                    d.cursoTitulo ||
+                    ("Curso #" + cursoId),
+                  portada:
+                    d.curso_portada ||
+                    d.cursoPortada ||
+                    "https://via.placeholder.com/600x360?text=FreeEd+Curso",
+                  nivel:  d.curso_nivel || d.cursoNivel || "-",
+                  precio: Number(d.precio_unitario ?? d.precioUnitario ?? 0),
                 });
               }
             });
           });
 
-          const courses = Array.from(courseMap.values());
-          const totalPedidos = learning.length;
+          const courses      = Array.from(courseMap.values());
           const totalCursos  = courses.length;
+          const totalPedidos = learning.length;
 
-          const cards = courses.map(c => \`
+          const cards = courses.map((c) => \`
             <article class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow">
               <div class="h-40 overflow-hidden bg-slate-100">
                 <img
@@ -144,7 +179,7 @@ export function renderMisCursosPage() {
 
                 <div class="mt-auto flex items-center justify-between">
                   <span class="text-sm font-semibold text-slate-900">
-                    \$ \${Number(c.precio || 0).toFixed(2)}
+                    \$ \${c.precio.toFixed(2)}
                   </span>
                   <button
                     type="button"
@@ -180,7 +215,51 @@ export function renderMisCursosPage() {
           \`;
         }
 
-        render();
+        // ================== CARGA: /api/pedidos/mios ==================
+        async function cargarMisCursos() {
+          try {
+            root.innerHTML = \`
+              <div class="bg-white border border-slate-200 rounded-xl p-6 text-center text-sm text-slate-500">
+                Cargando tus cursos...
+              </div>
+            \`;
+
+            // 1) Pedidos SOLO del cliente actual
+            const json = await fetchJson("/api/pedidos/mios");
+            const pedidosBase = Array.isArray(json) ? json : (json.data ?? []);
+
+            if (!pedidosBase.length) {
+              renderCursos([]);
+              return;
+            }
+
+            // 2) Por cada pedido, traer su detalle con /api/pedidos/mios/:id
+            const learning = await Promise.all(
+              pedidosBase.map(async (p) => {
+                try {
+                  const detalle = await fetchJson("/api/pedidos/mios/" + p.id);
+                  const pedido   = detalle.pedido || detalle;
+                  const detalles = detalle.detalles || pedido.detalles || [];
+                  return { pedido, detalles };
+                } catch (e) {
+                  console.error("Error cargando pedido", p.id, e);
+                  return { pedido: p, detalles: [] };
+                }
+              })
+            );
+
+            renderCursos(learning);
+          } catch (err) {
+            console.error("Error cargando mis cursos:", err);
+            root.innerHTML = \`
+              <div class="bg-white border border-slate-200 rounded-xl p-6 text-center text-sm text-red-500">
+                Ocurrió un error al cargar tus cursos.
+              </div>
+            \`;
+          }
+        }
+
+        cargarMisCursos();
       })();
     </script>
   `;

@@ -4,41 +4,42 @@ import { renderPage } from "../../layout/basepage.js";
 export function renderCarritoPage() {
   const content = `
     <section class="space-y-6">
-      <!-- Encabezado -->
-      <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div class="flex items-center justify-between">
         <div>
-          <p class="text-[11px] font-semibold tracking-wide text-indigo-600 uppercase">
+          <p class="text-xs font-semibold text-indigo-600 uppercase tracking-wide">
             Carrito de compra
           </p>
-          <h1 class="text-xl font-semibold text-slate-900">
+          <h1 class="text-xl font-bold text-slate-900">
             Cursos en tu carrito
           </h1>
-          <p class="text-sm text-slate-500">
+          <p class="text-xs text-slate-500 mt-1">
             Revisa los cursos seleccionados antes de confirmar tu compra.
           </p>
         </div>
-
-        <div class="text-right text-xs text-slate-500">
-          <p class="font-medium text-slate-700">Paso 1 de 2</p>
-          <p>Carrito → Mi aprendizaje</p>
+        <div class="text-right text-[11px] text-slate-500">
+          <p>Paso 1 de 2</p>
+          <p><span class="font-medium text-slate-700">Carrito</span> → Mi aprendizaje</p>
         </div>
-      </header>
+      </div>
 
-      <!-- Tarjeta principal -->
-      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-        <div class="border border-dashed border-slate-200 rounded-lg">
-          <table id="carrito-table" class="min-w-full text-sm">
-            <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="px-6 py-3 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          Resumen de cursos
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead class="bg-slate-50 text-[11px] font-medium text-slate-500 uppercase">
               <tr>
-                <th class="px-3 py-2 text-left font-medium">Curso</th>
-                <th class="px-3 py-2 text-center font-medium">Cantidad</th>
-                <th class="px-3 py-2 text-right font-medium">Precio</th>
-                <th class="px-3 py-2 text-right font-medium">Subtotal</th>
+                <th class="px-6 py-3 text-left">Curso</th>
+                <th class="px-6 py-3 text-center w-24">Cantidad</th>
+                <th class="px-6 py-3 text-right w-32">Precio</th>
+                <th class="px-6 py-3 text-right w-32">Subtotal</th>
               </tr>
             </thead>
-            <tbody id="carrito-body" class="divide-y divide-slate-100">
+            <tbody id="carrito-body">
               <tr>
-                <td colspan="4" class="py-6 text-center text-slate-400 text-sm">
+                <td colspan="4" class="px-6 py-6 text-center text-slate-400 text-sm">
                   Cargando carrito...
                 </td>
               </tr>
@@ -46,24 +47,23 @@ export function renderCarritoPage() {
           </table>
         </div>
 
-        <!-- Total y acciones -->
-        <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div class="text-xs text-slate-500">
-            <p>Al confirmar la compra, los cursos pasarán a <span class="font-medium text-slate-700">Mi aprendizaje</span>.</p>
-          </div>
+        <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-between text-sm">
+          <p class="text-xs text-slate-500">
+            Al confirmar la compra, los cursos pasarán a
+            <a href="/client/miscursos" class="text-indigo-600 font-medium">Mi aprendizaje</a>.
+          </p>
 
-          <div class="flex items-center gap-4 justify-between sm:justify-end">
+          <div class="flex items-center gap-4">
             <div class="text-right">
-              <p class="text-xs text-slate-500">Total</p>
-              <p id="carrito-total" class="text-lg font-semibold text-slate-900">
+              <p class="text-[11px] text-slate-400 uppercase">Total</p>
+              <p id="carrito-total" class="text-base font-semibold text-slate-900">
                 $ 0.00
               </p>
             </div>
-
             <button
-              id="btn-carrito-confirmar"
+              id="btn-confirmar"
               type="button"
-              class="inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              class="px-4 py-2.5 rounded-md bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Confirmar compra
             </button>
@@ -76,26 +76,27 @@ export function renderCarritoPage() {
       (function () {
         const TOKEN_KEY = "freeed:token";
         const USER_KEY  = "freeed:user";
-        const CART_KEY  = "freeed:cart";
 
-        const tbody         = document.getElementById("carrito-body");
-        const totalEl       = document.getElementById("carrito-total");
-        const btnConfirmar  = document.getElementById("btn-carrito-confirmar");
-        const table         = document.getElementById("carrito-table");
+        const tbody = document.getElementById("carrito-body");
+        const totalEl = document.getElementById("carrito-total");
+        const btnConfirmar = document.getElementById("btn-confirmar");
 
-        function redirectToLogin() {
-          localStorage.removeItem(TOKEN_KEY);
-          localStorage.removeItem(USER_KEY);
-          window.location.href = "/login";
+        if (!tbody || !totalEl || !btnConfirmar) {
+          console.error("Elementos del carrito no encontrados");
+          return;
         }
 
         const token = localStorage.getItem(TOKEN_KEY);
         let user = null;
-
         try {
           user = JSON.parse(localStorage.getItem(USER_KEY));
-        } catch (_) {
-          user = null;
+        } catch (_) {}
+
+        function redirectToLogin() {
+          localStorage.removeItem(TOKEN_KEY);
+          localStorage.removeItem(USER_KEY);
+          localStorage.removeItem("freeed:cart");
+          window.location.href = "/login";
         }
 
         if (!token || !user || user.rol !== "CLIENTE") {
@@ -104,207 +105,235 @@ export function renderCarritoPage() {
         }
 
         function formatMoney(value) {
-          const v = Number(value || 0);
-          return new Intl.NumberFormat("es-MX", {
-            style: "currency",
-            currency: "MXN",
-          }).format(v);
+          const n = Number(value || 0);
+          return n.toFixed(2);
         }
 
-        async function fetchJson(url, options) {
-          const baseOptions = options || {};
-          const headers = baseOptions.headers || {};
-
+        async function fetchJson(url, options = {}) {
           const resp = await fetch(url, {
-            ...baseOptions,
+            ...options,
             headers: {
-              ...headers,
               "Accept": "application/json",
-              "Content-Type": "application/json",
+              ...(options.headers || {}),
               "Authorization": "Bearer " + token,
             },
           });
 
-          if (!resp.ok) {
-            throw new Error("HTTP " + resp.status + " en " + url);
+          if (resp.status === 401) {
+            redirectToLogin();
+            return Promise.reject(new Error("No autorizado"));
           }
 
+          if (!resp.ok) {
+            throw new Error("Error HTTP " + resp.status);
+          }
+
+          if (resp.status === 204) return null;
           return resp.json();
         }
 
+        /* ================= CARGAR CARRITO ================= */
         async function cargarCarrito() {
-          if (!tbody || !totalEl) return;
-
-          tbody.innerHTML =
-            "<tr><td colspan=\\"4\\" class=\\"py-6 text-center text-slate-400 text-sm\\">Cargando carrito...</td></tr>";
-          totalEl.textContent = formatMoney(0);
-
           try {
-            const data = await fetchJson("/api/carrito");
-            const pedido   = data.pedido || {};
-            const detalles = Array.isArray(data.detalles) ? data.detalles : [];
+            tbody.innerHTML = \`
+              <tr>
+                <td colspan="4" class="px-6 py-6 text-center text-slate-400 text-sm">
+                  Cargando carrito...
+                </td>
+              </tr>\`;
 
-            if (!detalles.length) {
-              tbody.innerHTML =
-                "<tr><td colspan=\\"4\\" class=\\"py-6 text-center text-slate-400 text-sm\\">Tu carrito está vacío.</td></tr>";
-              totalEl.textContent = formatMoney(0);
-              if (btnConfirmar) btnConfirmar.disabled = true;
+            const data = await fetchJson("/api/carrito");
+            if (!data || !data.pedido) {
+              tbody.innerHTML = \`
+                <tr>
+                  <td colspan="4" class="px-6 py-6 text-center text-slate-400 text-sm">
+                    Tu carrito está vacío.
+                  </td>
+                </tr>\`;
+              totalEl.textContent = "$ 0.00";
+              btnConfirmar.disabled = true;
               return;
             }
 
-            if (btnConfirmar) btnConfirmar.disabled = false;
+            const detalles = data.detalles || [];
+            const total = data.pedido.total || 0;
 
-            const rowsHtml = detalles.map(function (d) {
-              const precioUnitario =
-                Number(d.precio_unitario || d.precioUnitario || 0);
-              const cantidad = Number(d.cantidad || 1);
-              const subtotal =
-                Number(d.subtotal || precioUnitario * cantidad);
-              const titulo =
-                d.curso_titulo || d.cursoTitulo || ("Curso #" + d.curso_id);
+            if (!detalles.length) {
+              tbody.innerHTML = \`
+                <tr>
+                  <td colspan="4" class="px-6 py-6 text-center text-slate-400 text-sm">
+                    Tu carrito está vacío.
+                  </td>
+                </tr>\`;
+              totalEl.textContent = "$ 0.00";
+              btnConfirmar.disabled = true;
+              return;
+            }
 
-              return (
-                "<tr data-id=\\"" + d.id + "\\">" +
-                  "<td class=\\"px-3 py-3 text-sm text-slate-800\\">" +
-                    titulo +
-                  "</td>" +
-                  "<td class=\\"px-3 py-3 text-center text-sm text-slate-700\\">" +
-                    "<input type=\\"number\\" min=\\"1\\" value=\\"" + cantidad + "\\" " +
-                      "class=\\"w-16 px-2 py-1 border border-slate-200 rounded text-center text-sm\\" " +
-                      "data-action=\\"change-qty\\" />" +
-                  "</td>" +
-                  "<td class=\\"px-3 py-3 text-right text-sm text-slate-700\\">" +
-                    formatMoney(precioUnitario) +
-                  "</td>" +
-                  "<td class=\\"px-3 py-3 text-right text-sm text-slate-700\\">" +
-                    "<span class=\\"mr-3 font-medium\\">" +
-                      formatMoney(subtotal) +
-                    "</span>" +
-                    "<button type=\\"button\\" " +
-                      "class=\\"text-rose-600 text-xs hover:text-rose-700\\" " +
-                      "data-action=\\"remove\\">Eliminar</button>" +
-                  "</td>" +
-                "</tr>"
-              );
-            }).join("");
+            tbody.innerHTML = detalles
+              .map((d) => {
+                const titulo = d.curso_titulo || "Curso #" + d.curso_id;
+                const nivel  = d.curso_nivel || "";
+                const portada = d.curso_portada ||
+                  "https://via.placeholder.com/160x100?text=FreeEd";
 
-            tbody.innerHTML = rowsHtml;
-            totalEl.textContent = formatMoney(pedido.total || 0);
+                return \`
+                  <tr class="border-t border-slate-100 hover:bg-slate-50" data-detalle-id="\${d.id}">
+                    <td class="px-6 py-4">
+                      <div class="flex items-center gap-3">
+                        <div class="w-16 h-10 rounded-md overflow-hidden bg-slate-100 flex-shrink-0">
+                          <img
+                            src="\${portada}"
+                            alt="Portada curso"
+                            class="w-full h-full object-cover"
+                            onerror="this.src='https://via.placeholder.com/160x100?text=FreeEd';"
+                          />
+                        </div>
+                        <div>
+                          <p class="text-sm font-semibold text-slate-800 line-clamp-1">
+                            \${titulo}
+                          </p>
+                          <p class="text-[11px] text-slate-500 uppercase">\${nivel}</p>
+                          <button
+                            type="button"
+                            class="mt-1 text-[11px] text-rose-600 hover:text-rose-700"
+                            data-action="remove-item"
+                            data-id="\${d.id}"
+                            data-cantidad="\${d.cantidad}"
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 text-center align-middle">
+                      \${d.cantidad}
+                    </td>
+                    <td class="px-6 py-4 text-right align-middle">
+                      \$ \${formatMoney(d.precio_unitario)}
+                    </td>
+                    <td class="px-6 py-4 text-right align-middle">
+                      \$ \${formatMoney(d.subtotal)}
+                    </td>
+                  </tr>
+                \`;
+              })
+              .join("");
+
+            totalEl.textContent = "$ " + formatMoney(total);
+            btnConfirmar.disabled = false;
+
           } catch (err) {
             console.error("Error cargando carrito:", err);
-            tbody.innerHTML =
-              "<tr><td colspan=\\"4\\" class=\\"py-6 text-center text-red-500 text-sm\\">Error al cargar el carrito.</td></tr>";
+            tbody.innerHTML = \`
+              <tr>
+                <td colspan="4" class="px-6 py-6 text-center text-red-500 text-sm">
+                  Error al cargar el carrito.
+                </td>
+              </tr>\`;
+            totalEl.textContent = "$ 0.00";
+            btnConfirmar.disabled = true;
           }
         }
 
-        async function actualizarCantidad(id, cantidad) {
+        /* ================= ELIMINAR ITEM ================= */
+        async function eliminarItem(detalleId, cantidad) {
           try {
-            await fetchJson("/api/carrito/items/" + id, {
-              method: "PATCH",
-              body: JSON.stringify({ cantidad: cantidad }),
-            });
-            await cargarCarrito();
-          } catch (err) {
-            console.error("Error actualizando cantidad:", err);
-            if (window.Swal) {
-              Swal.fire({
-                icon: "error",
-                title: "No se pudo actualizar",
-                text: "Intenta de nuevo.",
-              });
-            }
-          }
-        }
+            const body = { cantidad: Number(cantidad) || 1 };
 
-        async function eliminarItem(id) {
-          try {
-            await fetchJson("/api/carrito/items/" + id, {
+            await fetchJson("/api/carrito/items/" + detalleId, {
               method: "DELETE",
-              body: JSON.stringify({ cantidad: 1 }),
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(body),
             });
+
+            // Actualizar contador del icono
+            if (window.freeedSyncCartBadge) {
+              window.freeedSyncCartBadge();
+            }
+
             await cargarCarrito();
           } catch (err) {
             console.error("Error eliminando item:", err);
             if (window.Swal) {
               Swal.fire({
                 icon: "error",
-                title: "No se pudo eliminar",
-                text: "Intenta de nuevo.",
+                title: "Error",
+                text: "No se pudo eliminar el curso del carrito.",
               });
+            } else {
+              alert("No se pudo eliminar el curso del carrito.");
             }
           }
         }
 
-        // Delegación de eventos en la tabla
-        if (table) {
-          table.addEventListener("change", function (ev) {
-            const input = ev.target.closest("input[data-action='change-qty']");
-            if (!input) return;
+        tbody.addEventListener("click", (ev) => {
+          const btn = ev.target.closest("[data-action='remove-item']");
+          if (!btn) return;
 
-            const row = input.closest("tr");
-            if (!row) return;
+          const id = btn.dataset.id;
+          const cantidad = btn.dataset.cantidad || "1";
 
-            const id = row.getAttribute("data-id");
-            const cantidad = Number(input.value) || 1;
-            actualizarCantidad(id, cantidad);
-          });
+          if (!id) return;
 
-          table.addEventListener("click", function (ev) {
-            const btnRemove = ev.target.closest("button[data-action='remove']");
-            if (!btnRemove) return;
-
-            const row = btnRemove.closest("tr");
-            if (!row) return;
-
-            const id = row.getAttribute("data-id");
-            eliminarItem(id);
-          });
-        }
-
-        if (btnConfirmar) {
-          btnConfirmar.addEventListener("click", async function () {
-            try {
-              if (window.Swal) {
-                const result = await Swal.fire({
-                  icon: "question",
-                  title: "Confirmar compra",
-                  text: "¿Deseas completar tu compra y pasar los cursos a Mi aprendizaje?",
-                  showCancelButton: true,
-                  confirmButtonText: "Sí, confirmar",
-                  cancelButtonText: "Cancelar",
-                });
-                if (!result.isConfirmed) return;
+          if (window.Swal) {
+            Swal.fire({
+              icon: "question",
+              title: "Eliminar curso",
+              text: "¿Deseas eliminar este curso de tu carrito?",
+              showCancelButton: true,
+              confirmButtonText: "Sí, eliminar",
+              cancelButtonText: "Cancelar",
+            }).then((result) => {
+              if (result.isConfirmed) {
+                eliminarItem(id, cantidad);
               }
-
-              await fetchJson("/api/carrito/confirmar", {
-                method: "POST",
-              });
-
-              if (window.Swal) {
-                await Swal.fire({
-                  icon: "success",
-                  title: "Compra completada",
-                  text: "Tus cursos ya están disponibles en Mi aprendizaje.",
-                  timer: 1800,
-                  showConfirmButton: false,
-                });
-              }
-
-              // limpiamos carrito local
-              localStorage.removeItem(CART_KEY);
-              window.location.href = "/client/miscursos";
-            } catch (err) {
-              console.error("Error confirmando carrito:", err);
-              if (window.Swal) {
-                Swal.fire({
-                  icon: "error",
-                  title: "No se pudo confirmar",
-                  text: "Intenta de nuevo en unos minutos.",
-                });
-              }
+            });
+          } else {
+            if (confirm("¿Eliminar este curso del carrito?")) {
+              eliminarItem(id, cantidad);
             }
-          });
-        }
+          }
+        });
+
+        /* ================= CONFIRMAR COMPRA ================= */
+        btnConfirmar.addEventListener("click", async () => {
+          try {
+            btnConfirmar.disabled = true;
+
+            await fetchJson("/api/carrito/confirmar", {
+              method: "POST",
+            });
+
+            if (window.freeedSyncCartBadge) {
+              window.freeedSyncCartBadge();
+            }
+
+            if (window.Swal) {
+              await Swal.fire({
+                icon: "success",
+                title: "Compra confirmada",
+                text: "Tus cursos ahora están disponibles en Mi aprendizaje.",
+                confirmButtonText: "Ir a Mi aprendizaje",
+              });
+            }
+            window.location.href = "/client/miscursos";
+          } catch (err) {
+            console.error("Error confirmando compra:", err);
+            btnConfirmar.disabled = false;
+            if (window.Swal) {
+              Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "No se pudo confirmar la compra.",
+              });
+            } else {
+              alert("No se pudo confirmar la compra.");
+            }
+          }
+        });
 
         // Cargar al entrar
         cargarCarrito();
